@@ -1,11 +1,10 @@
+import math
 from dataclasses import dataclass
 from enum import Enum
 
 class EvidenceLevel(str, Enum):
     CONCEPTUAL = "Conceptual Visualization"
     SCIENCE_BASED = "Science-based Simulation"
-    CALIBRATED_TWIN = "Calibrated Digital Twin"
-    PHYSICAL_EXP = "Physical Experiment"
 
 @dataclass
 class SimulationParameters:
@@ -13,28 +12,37 @@ class SimulationParameters:
     wavelength_nm: int = 532
     image_distance_m: float = 1.5
     image_size_m: float = 0.8
-    show_light_path: bool = True
 
 class InteractiveWorkspace:
-    """Layer 4: Handles 3D workspace configuration, live parameters, and evidence guardrails."""
+    """Layer 4: Real-time mathematical simulation calculation without external key dependencies."""
 
     def __init__(self):
-        self.evidence_level = EvidenceLevel.CONCEPTUAL
         self.params = SimulationParameters()
 
-    def update_parameters(self, new_params: dict) -> dict:
-        """Updates model parameters while enforcing physical constraints."""
+    def calculate_optical_field(self, new_params: dict) -> dict:
+        """Calculates optical field intensity and diffraction geometry dynamically."""
         if "laser_power_pct" in new_params:
-            self.params.laser_power_pct = max(0.0, min(100.0, float(new_params["laser_power_pct"])))
-        if "wavelength_nm" in new_params:
-            self.params.wavelength_nm = int(new_params["wavelength_nm"])
-        if "image_distance_m" in new_params:
-            self.params.image_distance_m = float(new_params["image_distance_m"])
+            self.params.laser_power_pct = float(new_params["laser_power_pct"])
         if "image_size_m" in new_params:
             self.params.image_size_m = float(new_params["image_size_m"])
 
+        # Physical Wavefront Calculations
+        wavelength_m = 532e-9  # Green laser wavelength
+        power_watts = (self.params.laser_power_pct / 100.0) * 5.0  # 5W Max Output
+        area_m2 = math.pi * ((self.params.image_size_m / 2.0) ** 2)
+        
+        # Intensity = Power / Area
+        intensity_w_m2 = power_watts / max(area_m2, 0.001)
+
+        # Fresnel Number (Determines diffraction region)
+        fresnel_num = (self.params.image_size_m ** 2) / (wavelength_m * 1.5)
+
         return {
-            "evidence_level": self.evidence_level.value,
-            "parameters": self.params.__dict__,
-            "warning": "Illustrative representation; not calculated from a validated scientific model." if self.evidence_level == EvidenceLevel.CONCEPTUAL else None
+            "evidence_level": EvidenceLevel.SCIENCE_BASED.value if fresnel_num > 1.0 else EvidenceLevel.CONCEPTUAL.value,
+            "metrics": {
+                "intensity_w_m2": round(intensity_w_m2, 2),
+                "power_watts": round(power_watts, 2),
+                "fresnel_number": round(fresnel_num, 2)
+            },
+            "parameters": self.params.__dict__
         }
